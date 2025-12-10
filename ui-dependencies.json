@@ -1,0 +1,28 @@
+{
+  "name": "game-trading-ui-components",
+  "description": "Dependencies required for the UI component library",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "installation_instructions": {
+    "step_1": "npm install react react-dom",
+    "step_2": "npm install -D @types/react @types/react-dom @types/node typescript",
+    "step_3": "npm install -D tailwindcss postcss autoprefixer",
+    "step_4": "See SETUP.md for complete configuration instructions"
+  }
+}
