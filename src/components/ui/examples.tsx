@@ -159,7 +159,7 @@ export const UserForm: React.FC = () => {
     category: '',
     price: '',
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const { addToast } = useToast();
 

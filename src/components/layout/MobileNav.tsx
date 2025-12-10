@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Search, PlusCircle, MessageSquare, User } from 'lucide-react'
+import { Home, Search, Plus, MessageSquare, User } from 'lucide-react'
 
 interface MobileNavProps {
   isAuthenticated: boolean
@@ -18,61 +18,66 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
       icon: Home,
     },
     {
-      label: '検索',
+      label: 'さがす',
       href: '/search',
       icon: Search,
     },
     {
       label: '出品',
-      href: isAuthenticated ? '/listings/new' : '/auth/signin',
-      icon: PlusCircle,
+      href: isAuthenticated ? '/sell' : '/login',
+      icon: Plus,
+      isCenter: true,
     },
     {
       label: 'メッセージ',
-      href: isAuthenticated ? '/mypage/messages' : '/auth/signin',
+      href: isAuthenticated ? '/transactions' : '/login',
       icon: MessageSquare,
     },
     {
       label: 'マイページ',
-      href: isAuthenticated ? '/mypage' : '/auth/signin',
+      href: isAuthenticated ? '/mypage' : '/login',
       icon: User,
     },
   ]
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 safe-area-inset-bottom">
-      <div className="flex items-center justify-around h-16">
-        {navItems.map((item) => {
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 safe-bottom">
+      <div className="flex items-center justify-around h-14">
+        {navItems.map((item, index) => {
           const Icon = item.icon
-          const isActive = pathname === item.href
-          const isCreateButton = item.href.includes('/listings/new')
+          const isActive = pathname === item.href ||
+            (item.href === '/mypage' && pathname.startsWith('/mypage')) ||
+            (item.href === '/transactions' && pathname.startsWith('/transactions')) ||
+            (item.href === '/sell' && pathname === '/sell') ||
+            (item.href === '/search' && pathname === '/search')
+
+          if (item.isCenter) {
+            return (
+              <Link
+                key={index}
+                href={item.href}
+                className="flex flex-col items-center justify-center flex-1 h-full"
+              >
+                <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center shadow-md -mt-3">
+                  <Icon className="w-5 h-5 text-white" strokeWidth={2.5} />
+                </div>
+              </Link>
+            )
+          }
 
           return (
             <Link
-              key={item.href}
+              key={index}
               href={item.href}
               className={`
-                flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors
-                ${isActive ? 'text-red-500' : 'text-gray-600'}
+                flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors
+                ${isActive ? 'text-red-500' : 'text-gray-400'}
               `}
             >
-              {isCreateButton ? (
-                <div className="flex flex-col items-center justify-center -mt-6">
-                  <div className="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center shadow-lg">
-                    <Icon className="w-7 h-7 text-white" strokeWidth={2.5} />
-                  </div>
-                  <span className="text-xs mt-1 font-medium">
-                    {item.label}
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
-                  <span className={`text-xs ${isActive ? 'font-medium' : ''}`}>
-                    {item.label}
-                  </span>
-                </>
-              )}
+              <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
+              <span className={`text-[10px] ${isActive ? 'font-medium' : ''}`}>
+                {item.label}
+              </span>
             </Link>
           )
         })}

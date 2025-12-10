@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 
 interface ImageGalleryProps {
   images: string[]
@@ -23,13 +22,10 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
     <div className="space-y-4">
       {/* Main Image */}
       <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
-        <Image
+        <img
           src={images[selectedIndex]}
           alt={`${title} - ${selectedIndex + 1}`}
-          fill
-          className="object-cover"
-          priority
-          sizes="(max-width: 768px) 100vw, 50vw"
+          className="w-full h-full object-cover"
         />
       </div>
 
@@ -46,12 +42,10 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
                   : 'border-transparent hover:border-gray-300'
               }`}
             >
-              <Image
+              <img
                 src={image}
                 alt={`${title} - サムネイル ${index + 1}`}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 33vw, 16vw"
+                className="w-full h-full object-cover"
               />
             </button>
           ))}

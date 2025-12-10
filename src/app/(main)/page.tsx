@@ -1,177 +1,184 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { Suspense } from 'react'
+import { createClient } from '@/lib/supabase/server'
 import { ListingGrid } from '@/components/features/listings/ListingGrid'
-import { ListingWithSeller, GameCategory } from '@/types/database'
-import { createClient } from '@/lib/supabase/client'
+import { GameCategory, ListingWithSeller } from '@/types/database'
+import Link from 'next/link'
 
-export default function HomePage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+interface SearchParams {
+  category?: string
+  q?: string
+}
 
-  const [listings, setListings] = useState<ListingWithSeller[]>([])
-  const [categories, setCategories] = useState<GameCategory[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get('category'))
+async function getCategories(): Promise<GameCategory[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('game_categories')
+    .select('*')
+    .order('name')
 
-  useEffect(() => {
-    async function fetchCategories() {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('game_categories')
-        .select('*')
-        .order('name')
+  return (data as GameCategory[]) || []
+}
 
-      if (data) {
-        setCategories(data)
-      }
-    }
+async function getListings(searchParams: SearchParams): Promise<ListingWithSeller[]> {
+  const supabase = await createClient()
 
-    fetchCategories()
-  }, [])
+  let query = supabase
+    .from('listings')
+    .select(`
+      *,
+      seller:users!listings_seller_id_fkey(id, username, avatar_url, rating_avg, rating_count),
+      category:game_categories(id, name, slug)
+    `)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(24)
 
-  useEffect(() => {
-    async function fetchListings() {
-      setLoading(true)
-
-      // Build query params
-      const params = new URLSearchParams()
-      if (searchQuery) params.append('search', searchQuery)
-      if (selectedCategory) params.append('category', selectedCategory)
-      params.append('status', 'active')
-
-      try {
-        const response = await fetch(`/api/listings?${params.toString()}`)
-        const data = await response.json()
-
-        if (data.listings) {
-          setListings(data.listings)
-        }
-      } catch (error) {
-        console.error('Failed to fetch listings:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchListings()
-  }, [searchQuery, selectedCategory])
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Update URL params
-    const params = new URLSearchParams()
-    if (searchQuery) params.append('search', searchQuery)
-    if (selectedCategory) params.append('category', selectedCategory)
-
-    router.push(`/?${params.toString()}`)
+  if (searchParams.category) {
+    query = query.eq('category_id', searchParams.category)
   }
 
-  const handleCategoryChange = (categoryId: string | null) => {
-    setSelectedCategory(categoryId)
-
-    // Update URL params
-    const params = new URLSearchParams()
-    if (searchQuery) params.append('search', searchQuery)
-    if (categoryId) params.append('category', categoryId)
-
-    router.push(`/?${params.toString()}`)
+  if (searchParams.q) {
+    query = query.ilike('title', `%${searchParams.q}%`)
   }
+
+  const { data } = await query
+
+  return (data as ListingWithSeller[]) || []
+}
+
+function ListingSkeleton() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {[...Array(8)].map((_, i) => (
+        <div key={i} className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200 animate-pulse">
+          <div className="aspect-square bg-gray-200" />
+          <div className="p-3 space-y-2">
+            <div className="h-4 bg-gray-200 rounded w-3/4" />
+            <div className="h-6 bg-gray-200 rounded w-1/2" />
+            <div className="h-3 bg-gray-200 rounded w-1/4" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+async function ListingsSection({ searchParams }: { searchParams: SearchParams }) {
+  const listings = await getListings(searchParams)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Search and Filter Section */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="mb-6">
-            <div className="relative max-w-2xl mx-auto">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="商品を検索..."
-                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <svg
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700"
-              >
-                検索
-              </button>
-            </div>
-          </form>
+    <ListingGrid
+      listings={listings}
+      emptyMessage={searchParams.q ? `「${searchParams.q}」に一致する商品が見つかりませんでした` : '出品商品がありません'}
+    />
+  )
+}
 
-          {/* Category Filter */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2">
-            <button
-              onClick={() => handleCategoryChange(null)}
-              className={`px-4 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === null
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await searchParams
+  const categories = await getCategories()
+
+  return (
+    <div className="min-h-screen bg-white">
+      <main className="container mx-auto px-4 py-6">
+        {/* Hero Section */}
+        <section className="mb-8 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-6 md:p-8 text-white">
+          <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-3">
+            ゲームアイテムを安全に取引
+          </h1>
+          <p className="text-base md:text-xl opacity-90 mb-4 md:mb-6">
+            欲しいアイテムを見つけよう。不要なアイテムを出品しよう。
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/sell"
+              className="inline-flex items-center px-5 py-2.5 md:px-6 md:py-3 bg-white text-red-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors text-sm md:text-base"
+            >
+              出品する
+            </Link>
+            <Link
+              href="/search"
+              className="inline-flex items-center px-5 py-2.5 md:px-6 md:py-3 bg-red-600 text-white font-semibold rounded-lg border-2 border-white hover:bg-red-700 transition-colors text-sm md:text-base"
+            >
+              商品を探す
+            </Link>
+          </div>
+        </section>
+
+        {/* Category Filter */}
+        <section className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">カテゴリー</h2>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/"
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                !params.category
+                  ? 'bg-red-500 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
               }`}
             >
               すべて
-            </button>
+            </Link>
             {categories.map((category) => (
-              <button
+              <Link
                 key={category.id}
-                onClick={() => handleCategoryChange(category.id)}
-                className={`px-4 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${
-                  selectedCategory === category.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                href={`/?category=${category.id}`}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  params.category === category.id
+                    ? 'bg-red-500 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                 }`}
               >
                 {category.name}
-              </button>
+              </Link>
             ))}
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Listings Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200">
-                <div className="aspect-square bg-gray-200 animate-pulse" />
-                <div className="p-3 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-6 bg-gray-200 rounded animate-pulse w-2/3" />
-                  <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2" />
-                </div>
-              </div>
-            ))}
+        {/* Search Results Info */}
+        {params.q && (
+          <div className="mb-4">
+            <p className="text-gray-600">
+              「<span className="font-medium text-gray-900">{params.q}</span>」の検索結果
+            </p>
           </div>
-        ) : (
-          <ListingGrid
-            listings={listings}
-            emptyMessage={
-              searchQuery || selectedCategory
-                ? '検索条件に一致する商品が見つかりませんでした'
-                : '出品商品がありません'
-            }
-          />
         )}
-      </div>
+
+        {/* Listings Grid */}
+        <section id="listings">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {params.category
+                ? categories.find(c => c.id === params.category)?.name || '商品一覧'
+                : '新着商品'}
+            </h2>
+          </div>
+
+          <Suspense fallback={<ListingSkeleton />}>
+            <ListingsSection searchParams={params} />
+          </Suspense>
+        </section>
+
+        {/* CTA Section */}
+        <section className="mt-12 text-center py-12 bg-gray-50 rounded-2xl border border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            あなたも出品してみませんか？
+          </h2>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            不要なゲームアイテムを簡単に出品。安全な取引システムで安心してお取引できます。
+          </p>
+          <Link
+            href="/sell"
+            className="inline-flex items-center px-8 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors"
+          >
+            今すぐ出品する
+          </Link>
+        </section>
+      </main>
     </div>
   )
 }

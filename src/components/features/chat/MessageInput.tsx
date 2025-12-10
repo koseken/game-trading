@@ -24,7 +24,7 @@ export function MessageInput({ onSend, disabled = false, sending = false }: Mess
 
     try {
       await onSend(content)
-    } catch (error) {
+    } catch {
       // Restore message on error
       setMessage(content)
     }
@@ -49,7 +49,7 @@ export function MessageInput({ onSend, disabled = false, sending = false }: Mess
             placeholder={disabled ? '取引が完了しました' : 'メッセージを入力...'}
             disabled={disabled || sending}
             rows={1}
-            className="w-full resize-none rounded-lg border border-gray-300 px-4 py-2.5 pr-12 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed max-h-32 overflow-y-auto"
+            className="w-full resize-none rounded-lg border border-gray-300 px-4 py-2.5 pr-12 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed max-h-32 overflow-y-auto bg-white text-gray-900"
             style={{
               minHeight: '44px',
               height: 'auto',

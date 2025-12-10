@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 
 interface ImageUploadProps {
@@ -49,7 +48,7 @@ export function ImageUpload({ images, onChange, error, maxImages = 3 }: ImageUpl
         const filePath = `listings/${fileName}`
 
         // Upload to Supabase Storage
-        const { error: uploadError, data } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('images')
           .upload(filePath, file, {
             cacheControl: '3600',
@@ -97,11 +96,10 @@ export function ImageUpload({ images, onChange, error, maxImages = 3 }: ImageUpl
           <div className="grid grid-cols-3 gap-4">
             {images.map((url, index) => (
               <div key={index} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
-                <Image
+                <img
                   src={url}
                   alt={`商品画像 ${index + 1}`}
-                  fill
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                 />
                 <button
                   type="button"

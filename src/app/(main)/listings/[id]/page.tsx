@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ListingWithSeller } from '@/types/database'
@@ -45,7 +44,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       category:game_categories(*)
     `)
     .eq('status', 'active')
-    .eq('category_id', typedListing.category_id)
+    .eq('category_id', typedListing.category_id ?? '')
     .neq('id', id)
     .limit(4)
 
@@ -111,12 +110,10 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               <h3 className="text-sm font-semibold text-gray-700 mb-3">出品者</h3>
               <div className="flex items-center gap-3">
                 {typedListing.seller.avatar_url ? (
-                  <Image
+                  <img
                     src={typedListing.seller.avatar_url}
                     alt={typedListing.seller.username}
-                    width={48}
-                    height={48}
-                    className="rounded-full"
+                    className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">

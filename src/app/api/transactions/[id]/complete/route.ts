@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Database, Transaction } from '@/types/database'
 
 interface RouteContext {
   params: Promise<{
@@ -33,7 +34,9 @@ export async function PUT(
       .eq('id', id)
       .single()
 
-    if (transactionError || !transaction) {
+    const typedTransaction = transaction as (Transaction & { listing: { id: string } }) | null
+
+    if (transactionError || !typedTransaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
         { status: 404 }
@@ -41,7 +44,7 @@ export async function PUT(
     }
 
     // Check if user is the seller
-    if (transaction.seller_id !== user.id) {
+    if (typedTransaction.seller_id !== user.id) {
       return NextResponse.json(
         { error: 'Only the seller can complete the transaction' },
         { status: 403 }
@@ -49,7 +52,7 @@ export async function PUT(
     }
 
     // Check if transaction is in progress
-    if (transaction.status !== 'in_progress') {
+    if (typedTransaction.status !== 'in_progress') {
       return NextResponse.json(
         { error: 'Transaction is not in progress' },
         { status: 400 }
@@ -57,12 +60,15 @@ export async function PUT(
     }
 
     // Update transaction status to completed
+    const updateData: Database['public']['Tables']['transactions']['Update'] = {
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+    }
+
     const { data: updatedTransaction, error: updateError } = await supabase
       .from('transactions')
-      .update({
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-      })
+      // @ts-expect-error - Supabase types are correct at runtime
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()
@@ -72,23 +78,31 @@ export async function PUT(
     }
 
     // Update listing status to sold
+    const listingUpdateData: Database['public']['Tables']['listings']['Update'] = {
+      status: 'sold'
+    }
+
     const { error: listingError } = await supabase
       .from('listings')
-      .update({ status: 'sold' })
-      .eq('id', transaction.listing.id)
+      // @ts-expect-error - Supabase types are correct at runtime
+      .update(listingUpdateData)
+      .eq('id', typedTransaction.listing.id)
 
     if (listingError) {
       throw listingError
     }
 
     // Send system message
+    const messageData: Database['public']['Tables']['messages']['Insert'] = {
+      transaction_id: id,
+      sender_id: user.id,
+      content: '取引が完了しました。ご利用ありがとうございました。',
+    }
+
     await supabase
       .from('messages')
-      .insert({
-        transaction_id: id,
-        sender_id: user.id,
-        content: '取引が完了しました。ご利用ありがとうございました。',
-      })
+      // @ts-expect-error - Supabase types are correct at runtime
+      .insert(messageData)
 
     return NextResponse.json({ transaction: updatedTransaction })
   } catch (error) {

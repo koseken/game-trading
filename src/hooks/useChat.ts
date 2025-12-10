@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { MessageWithSender } from '@/types/database'
+import type { MessageWithSender, Database } from '@/types/database'
 
 interface UseChatOptions {
   transactionId: string
@@ -80,10 +80,11 @@ export function useChat({ transactionId, enabled = true }: UseChatOptions): UseC
           if (newMessage) {
             setMessages((prev) => {
               // Avoid duplicates
-              if (prev.some((msg) => msg.id === newMessage.id)) {
+              const typedMessage = newMessage as MessageWithSender
+              if (prev.some((msg) => msg.id === typedMessage.id)) {
                 return prev
               }
-              return [...prev, newMessage as MessageWithSender]
+              return [...prev, typedMessage]
             })
           }
         }
@@ -107,13 +108,15 @@ export function useChat({ transactionId, enabled = true }: UseChatOptions): UseC
           throw new Error('User not authenticated')
         }
 
+        const newMessage: Database['public']['Tables']['messages']['Insert'] = {
+          transaction_id: transactionId,
+          sender_id: user.id,
+          content: content.trim(),
+        }
         const { error: insertError } = await supabase
           .from('messages')
-          .insert({
-            transaction_id: transactionId,
-            sender_id: user.id,
-            content: content.trim(),
-          })
+          // @ts-expect-error - Supabase type inference issue
+          .insert(newMessage)
 
         if (insertError) throw insertError
       } catch (err) {

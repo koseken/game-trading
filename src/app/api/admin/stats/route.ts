@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import type { User } from '@/types/database'
 
 export async function GET() {
   try {
@@ -20,7 +21,9 @@ export async function GET() {
       .eq('id', user.id)
       .single()
 
-    if (!userData?.is_admin) {
+    const typedUserData = userData as Pick<User, 'is_admin'> | null
+
+    if (!typedUserData?.is_admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

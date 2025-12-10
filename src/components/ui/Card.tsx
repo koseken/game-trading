@@ -36,7 +36,7 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       className={`
-        bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700
+        bg-white rounded-lg border border-gray-200
         ${paddingStyles[padding]}
         ${shadowStyles[shadow]}
         ${hoverStyles}
@@ -74,7 +74,7 @@ export const CardTitle: React.FC<CardTitleProps> = ({
 }) => {
   return (
     <Component
-      className={`text-lg font-semibold text-gray-900 dark:text-white ${className}`}
+      className={`text-lg font-semibold text-gray-900 ${className}`}
       {...props}
     >
       {children}
@@ -88,7 +88,7 @@ export interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const CardContent: React.FC<CardContentProps> = ({ children, className = '', ...props }) => {
   return (
-    <div className={`text-gray-600 dark:text-gray-300 ${className}`} {...props}>
+    <div className={`text-gray-600 ${className}`} {...props}>
       {children}
     </div>
   );
@@ -100,7 +100,7 @@ export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const CardFooter: React.FC<CardFooterProps> = ({ children, className = '', ...props }) => {
   return (
-    <div className={`mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 ${className}`} {...props}>
+    <div className={`mt-4 pt-4 border-t border-gray-200 ${className}`} {...props}>
       {children}
     </div>
   );

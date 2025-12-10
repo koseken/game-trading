@@ -1,17 +1,22 @@
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { MainLayoutClient } from '@/components/layout/MainLayoutClient'
+import { createClient } from '@/lib/supabase/server'
 
-export default function MainLayout({
+export default async function MainLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1">
+      <MainLayoutClient isAuthenticated={!!user}>
         {children}
-      </main>
+      </MainLayoutClient>
       <Footer />
     </div>
   )

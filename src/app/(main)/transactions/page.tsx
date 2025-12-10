@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -42,44 +42,44 @@ export default function TransactionsPage() {
     getUser()
   }, [supabase, router])
 
-  useEffect(() => {
+  const fetchTransactions = useCallback(async () => {
     if (!currentUserId) return
 
-    const fetchTransactions = async () => {
-      try {
-        setLoading(true)
+    try {
+      setLoading(true)
 
-        const query = supabase
-          .from('transactions')
-          .select(`
-            *,
-            listing:listings!transactions_listing_id_fkey(*),
-            buyer:users!transactions_buyer_id_fkey(*),
-            seller:users!transactions_seller_id_fkey(*)
-          `)
-          .order('created_at', { ascending: false })
+      const query = supabase
+        .from('transactions')
+        .select(`
+          *,
+          listing:listings!transactions_listing_id_fkey(*),
+          buyer:users!transactions_buyer_id_fkey(*),
+          seller:users!transactions_seller_id_fkey(*)
+        `)
+        .order('created_at', { ascending: false })
 
-        // Filter based on active tab
-        if (activeTab === 'buying') {
-          query.eq('buyer_id', currentUserId)
-        } else {
-          query.eq('seller_id', currentUserId)
-        }
-
-        const { data, error } = await query
-
-        if (error) throw error
-
-        setTransactions(data as TransactionWithDetails[])
-      } catch (error) {
-        console.error('Error fetching transactions:', error)
-      } finally {
-        setLoading(false)
+      // Filter based on active tab
+      if (activeTab === 'buying') {
+        query.eq('buyer_id', currentUserId)
+      } else {
+        query.eq('seller_id', currentUserId)
       }
-    }
 
-    fetchTransactions()
+      const { data, error } = await query
+
+      if (error) throw error
+
+      setTransactions(data as unknown as TransactionWithDetails[])
+    } catch (error) {
+      console.error('Error fetching transactions:', error)
+    } finally {
+      setLoading(false)
+    }
   }, [currentUserId, activeTab, supabase])
+
+  useEffect(() => {
+    fetchTransactions()
+  }, [fetchTransactions])
 
   if (!currentUserId || loading) {
     return (

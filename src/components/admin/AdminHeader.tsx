@@ -2,7 +2,6 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 interface AdminHeaderProps {
   user?: {
@@ -12,7 +11,6 @@ interface AdminHeaderProps {
 }
 
 export default function AdminHeader({ user }: AdminHeaderProps) {
-  const router = useRouter()
 
   return (
     <header className="bg-white shadow-sm">

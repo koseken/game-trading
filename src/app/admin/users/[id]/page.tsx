@@ -2,6 +2,7 @@ import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import type { User, Listing, Transaction } from '@/types/database'
 
 interface UserDetailPageProps {
   params: Promise<{
@@ -24,6 +25,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
     notFound()
   }
 
+  const typedUser = user as unknown as User
+
   // Get user's listings
   const { data: listings } = await supabase
     .from('listings')
@@ -38,6 +41,12 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
     .eq('seller_id', id)
     .order('created_at', { ascending: false })
 
+  type ListingWithCategory = Pick<Listing, 'id' | 'title' | 'price' | 'status' | 'created_at'> & {
+    category: { name: string } | null
+  }
+
+  const typedListings = (listings || []) as unknown as ListingWithCategory[]
+
   // Get user's transactions as buyer
   const { data: buyerTransactions } = await supabase
     .from('transactions')
@@ -50,6 +59,14 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
     `)
     .eq('buyer_id', id)
     .order('created_at', { ascending: false })
+
+  type TransactionWithDetails = Pick<Transaction, 'id' | 'status' | 'created_at'> & {
+    listing: { title: string; price: number } | null
+    seller?: { username: string }
+    buyer?: { username: string }
+  }
+
+  const typedBuyerTransactions = (buyerTransactions || []) as unknown as TransactionWithDetails[]
 
   // Get user's transactions as seller
   const { data: sellerTransactions } = await supabase
@@ -64,6 +81,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
     .eq('seller_id', id)
     .order('created_at', { ascending: false })
 
+  const typedSellerTransactions = (sellerTransactions || []) as unknown as TransactionWithDetails[]
+
   // Get reviews received
   const { data: reviews } = await supabase
     .from('reviews')
@@ -76,6 +95,16 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
     `)
     .eq('reviewee_id', id)
     .order('created_at', { ascending: false })
+
+  type ReviewWithReviewer = {
+    id: string
+    rating: number
+    comment: string | null
+    created_at: string
+    reviewer: { username: string } | null
+  }
+
+  const typedReviews = (reviews || []) as unknown as ReviewWithReviewer[]
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ja-JP', {
@@ -126,24 +155,24 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-start space-x-6">
           <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-            {user.avatar_url ? (
-              <img src={user.avatar_url} alt={user.username} className="w-24 h-24 rounded-full" />
+            {typedUser.avatar_url ? (
+              <img src={typedUser.avatar_url} alt={typedUser.username} className="w-24 h-24 rounded-full" />
             ) : (
               <span className="text-3xl font-medium text-gray-700">
-                {user.username.charAt(0).toUpperCase()}
+                {typedUser.username.charAt(0).toUpperCase()}
               </span>
             )}
           </div>
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
-              <h2 className="text-2xl font-bold text-gray-900">{user.username}</h2>
-              {user.is_admin && (
+              <h2 className="text-2xl font-bold text-gray-900">{typedUser.username}</h2>
+              {typedUser.is_admin && (
                 <span className="px-3 py-1 text-sm font-medium bg-purple-100 text-purple-800 rounded">
                   管理者
                 </span>
               )}
             </div>
-            <p className="text-gray-600 mb-4">{user.email}</p>
+            <p className="text-gray-600 mb-4">{typedUser.email}</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-sm text-gray-600">評価</p>
@@ -152,21 +181,21 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                   <span className="font-semibold">
-                    {user.rating_avg.toFixed(1)} ({user.rating_count})
+                    {typedUser.rating_avg.toFixed(1)} ({typedUser.rating_count})
                   </span>
                 </div>
               </div>
               <div>
                 <p className="text-sm text-gray-600">出品数</p>
-                <p className="text-lg font-semibold mt-1">{listings?.length || 0}</p>
+                <p className="text-lg font-semibold mt-1">{typedListings.length}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">購入数</p>
-                <p className="text-lg font-semibold mt-1">{buyerTransactions?.length || 0}</p>
+                <p className="text-lg font-semibold mt-1">{typedBuyerTransactions.length}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">登録日</p>
-                <p className="text-sm font-medium mt-1">{formatDate(user.created_at)}</p>
+                <p className="text-sm font-medium mt-1">{formatDate(typedUser.created_at)}</p>
               </div>
             </div>
           </div>
@@ -179,8 +208,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           <h3 className="text-lg font-semibold text-gray-900">出品一覧</h3>
         </div>
         <div className="divide-y divide-gray-200">
-          {listings && listings.length > 0 ? (
-            listings.map((listing: any) => (
+          {typedListings.length > 0 ? (
+            typedListings.map((listing) => (
               <div key={listing.id} className="p-4 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
@@ -216,8 +245,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             <h3 className="text-lg font-semibold text-gray-900">購入履歴</h3>
           </div>
           <div className="divide-y divide-gray-200">
-            {buyerTransactions && buyerTransactions.length > 0 ? (
-              buyerTransactions.slice(0, 5).map((transaction: any) => (
+            {typedBuyerTransactions.length > 0 ? (
+              typedBuyerTransactions.slice(0, 5).map((transaction) => (
                 <div key={transaction.id} className="p-4">
                   <p className="text-sm font-medium text-gray-900">{transaction.listing?.title}</p>
                   <p className="text-sm text-gray-600">
@@ -247,8 +276,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             <h3 className="text-lg font-semibold text-gray-900">販売履歴</h3>
           </div>
           <div className="divide-y divide-gray-200">
-            {sellerTransactions && sellerTransactions.length > 0 ? (
-              sellerTransactions.slice(0, 5).map((transaction: any) => (
+            {typedSellerTransactions.length > 0 ? (
+              typedSellerTransactions.slice(0, 5).map((transaction) => (
                 <div key={transaction.id} className="p-4">
                   <p className="text-sm font-medium text-gray-900">{transaction.listing?.title}</p>
                   <p className="text-sm text-gray-600">
@@ -279,8 +308,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           <h3 className="text-lg font-semibold text-gray-900">受け取ったレビュー</h3>
         </div>
         <div className="divide-y divide-gray-200">
-          {reviews && reviews.length > 0 ? (
-            reviews.map((review: any) => (
+          {typedReviews.length > 0 ? (
+            typedReviews.map((review) => (
               <div key={review.id} className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

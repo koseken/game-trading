@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { TransactionWithDetails } from '@/types/database'
+import type { TransactionWithDetails, Database } from '@/types/database'
 
 interface UseTransactionOptions {
   transactionId: string
@@ -109,11 +109,13 @@ export function useTransaction({
   const cancelTransaction = useCallback(async () => {
     try {
       setUpdating(true)
+      const updateData: Database['public']['Tables']['transactions']['Update'] = {
+        status: 'cancelled',
+      }
       const { error: updateError } = await supabase
         .from('transactions')
-        .update({
-          status: 'cancelled',
-        })
+        // @ts-expect-error - Supabase type inference issue with update operations
+        .update(updateData)
         .eq('id', transactionId)
 
       if (updateError) throw updateError

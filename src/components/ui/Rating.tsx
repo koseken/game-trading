@@ -113,12 +113,12 @@ export const Rating: React.FC<RatingProps> = ({
         })}
       </div>
       {showCount && count !== undefined && (
-        <span className={`text-gray-600 dark:text-gray-400 ${textSizeStyles[size]} ml-1`}>
+        <span className={`text-gray-600 ${textSizeStyles[size]} ml-1`}>
           ({count.toLocaleString()})
         </span>
       )}
       {!showCount && (
-        <span className={`text-gray-600 dark:text-gray-400 ${textSizeStyles[size]} ml-1 font-medium`}>
+        <span className={`text-gray-600 ${textSizeStyles[size]} ml-1 font-medium`}>
           {rating.toFixed(1)}
         </span>
       )}

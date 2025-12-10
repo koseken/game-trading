@@ -3,6 +3,7 @@ import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminHeader from '@/components/admin/AdminHeader'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import type { User } from '@/types/database'
 
 export const metadata = {
   title: '管理画面 - ゲームトレーディング',
@@ -24,11 +25,13 @@ export default async function AdminLayout({
     redirect('/login')
   }
 
-  const { data: userData } = await supabase
+  const { data } = await supabase
     .from('users')
     .select('username, email, is_admin')
     .eq('id', user.id)
     .single()
+
+  const userData = data as Pick<User, 'username' | 'email' | 'is_admin'> | null
 
   if (!userData?.is_admin) {
     redirect('/')

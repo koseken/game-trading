@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { updateListingSchema } from '@/lib/validations/listing'
+import type { Database } from '@/types/database'
 
 // GET /api/listings/[id] - Get single listing
 export async function GET(
@@ -64,7 +65,9 @@ export async function PUT(
       .eq('id', id)
       .single()
 
-    if (fetchError || !existingListing) {
+    const typedListing = existingListing as { seller_id: string } | null
+
+    if (fetchError || !typedListing) {
       return NextResponse.json(
         { error: '商品が見つかりません' },
         { status: 404 }
@@ -72,7 +75,7 @@ export async function PUT(
     }
 
     // Check if user is the seller
-    if (existingListing.seller_id !== user.id) {
+    if (typedListing.seller_id !== user.id) {
       return NextResponse.json(
         { error: '編集する権限がありません' },
         { status: 403 }
@@ -85,7 +88,7 @@ export async function PUT(
 
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: '入力内容に誤りがあります', details: validationResult.error.errors },
+        { error: '入力内容に誤りがあります', details: validationResult.error.issues },
         { status: 400 }
       )
     }
@@ -93,12 +96,15 @@ export async function PUT(
     const data = validationResult.data
 
     // Update listing
+    const updateData: Database['public']['Tables']['listings']['Update'] = {
+      ...data,
+      updated_at: new Date().toISOString()
+    }
+
     const { data: updatedListing, error: updateError } = await supabase
       .from('listings')
-      .update({
-        ...data,
-        updated_at: new Date().toISOString()
-      })
+      // @ts-expect-error - Supabase types are correct at runtime
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()
@@ -147,7 +153,9 @@ export async function DELETE(
       .eq('id', id)
       .single()
 
-    if (fetchError || !existingListing) {
+    const typedExistingListing = existingListing as { seller_id: string; images: string[] } | null
+
+    if (fetchError || !typedExistingListing) {
       return NextResponse.json(
         { error: '商品が見つかりません' },
         { status: 404 }
@@ -155,7 +163,7 @@ export async function DELETE(
     }
 
     // Check if user is the seller
-    if (existingListing.seller_id !== user.id) {
+    if (typedExistingListing.seller_id !== user.id) {
       return NextResponse.json(
         { error: '削除する権限がありません' },
         { status: 403 }
@@ -178,9 +186,9 @@ export async function DELETE(
 
     // Optionally delete images from storage
     // This is a best-effort cleanup - errors are logged but not returned
-    if (existingListing.images && existingListing.images.length > 0) {
+    if (typedExistingListing.images && typedExistingListing.images.length > 0) {
       try {
-        const imagePaths = existingListing.images.map((url: string) => {
+        const imagePaths = typedExistingListing.images.map((url: string) => {
           const urlParts = url.split('/storage/v1/object/public/images/')
           return urlParts[1] || url
         })

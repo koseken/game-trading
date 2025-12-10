@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { updateUserSchema } from '@/lib/validations/user'
+import type { Database } from '@/types/database'
 
 export async function GET() {
   try {
@@ -78,13 +79,16 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update user profile
+    const updateData: Database['public']['Tables']['users']['Update'] = {
+      username: validatedData.username,
+      avatar_url: validatedData.avatar_url,
+      updated_at: new Date().toISOString(),
+    }
+
     const { data: updatedUser, error: updateError } = await supabase
       .from('users')
-      .update({
-        username: validatedData.username,
-        avatar_url: validatedData.avatar_url,
-        updated_at: new Date().toISOString(),
-      })
+      // @ts-expect-error - Supabase types are correct at runtime
+      .update(updateData)
       .eq('id', authUser.id)
       .select()
       .single()

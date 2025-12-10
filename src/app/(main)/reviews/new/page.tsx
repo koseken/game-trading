@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ReviewForm } from '@/components/features/reviews/ReviewForm'
+import type { Transaction, Listing, User } from '@/types/database'
 
 interface PageProps {
   searchParams: Promise<{
@@ -44,16 +45,24 @@ export default async function NewReviewPage({ searchParams }: PageProps) {
     redirect('/mypage/purchases')
   }
 
+  type TransactionWithRelations = Transaction & {
+    listing: Listing
+    buyer: Pick<User, 'id' | 'username'>
+    seller: Pick<User, 'id' | 'username'>
+  }
+
+  const typedTransaction = transaction as unknown as TransactionWithRelations
+
   // Verify user is part of this transaction
-  const isBuyer = transaction.buyer_id === user.id
-  const isSeller = transaction.seller_id === user.id
+  const isBuyer = typedTransaction.buyer_id === user.id
+  const isSeller = typedTransaction.seller_id === user.id
 
   if (!isBuyer && !isSeller) {
     redirect('/mypage/purchases')
   }
 
   // Verify transaction is completed
-  if (transaction.status !== 'completed') {
+  if (typedTransaction.status !== 'completed') {
     redirect('/mypage/purchases')
   }
 
@@ -70,7 +79,7 @@ export default async function NewReviewPage({ searchParams }: PageProps) {
   }
 
   // Get reviewee details
-  const reviewee = isBuyer ? transaction.seller : transaction.buyer
+  const reviewee = isBuyer ? typedTransaction.seller : typedTransaction.buyer
 
   if (reviewee.id !== revieweeId) {
     redirect('/mypage/purchases')
@@ -93,21 +102,21 @@ export default async function NewReviewPage({ searchParams }: PageProps) {
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
             <h3 className="text-sm font-medium text-gray-700 mb-2">取引商品</h3>
             <div className="flex gap-3">
-              {transaction.listing.images && transaction.listing.images.length > 0 && (
+              {typedTransaction.listing.images && typedTransaction.listing.images.length > 0 && (
                 <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                   <img
-                    src={transaction.listing.images[0]}
-                    alt={transaction.listing.title}
+                    src={typedTransaction.listing.images[0]}
+                    alt={typedTransaction.listing.title}
                     className="w-full h-full object-cover"
                   />
                 </div>
               )}
               <div>
                 <p className="font-medium text-gray-900">
-                  {transaction.listing.title}
+                  {typedTransaction.listing.title}
                 </p>
                 <p className="text-sm text-gray-600">
-                  ¥{transaction.listing.price.toLocaleString()}
+                  ¥{typedTransaction.listing.price.toLocaleString()}
                 </p>
               </div>
             </div>

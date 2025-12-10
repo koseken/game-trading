@@ -17,7 +17,7 @@ export function CategorySelect({ value, onChange, error }: CategorySelectProps) 
   useEffect(() => {
     async function fetchCategories() {
       const supabase = createClient()
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('game_categories')
         .select('*')
         .order('name')
@@ -41,7 +41,7 @@ export function CategorySelect({ value, onChange, error }: CategorySelectProps) 
         value={value || ''}
         onChange={(e) => onChange(e.target.value || null)}
         disabled={loading}
-        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
           error ? 'border-red-500' : 'border-gray-300'
         } ${loading ? 'bg-gray-100' : 'bg-white'}`}
       >

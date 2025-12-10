@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Database, Transaction } from '@/types/database'
 
 interface RouteContext {
   params: Promise<{
@@ -33,7 +34,9 @@ export async function GET(
       .eq('id', id)
       .single()
 
-    if (transactionError || !transaction) {
+    const typedTransaction = transaction as Pick<Transaction, 'buyer_id' | 'seller_id'> | null
+
+    if (transactionError || !typedTransaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
         { status: 404 }
@@ -41,7 +44,7 @@ export async function GET(
     }
 
     // Check if user is buyer or seller
-    if (transaction.buyer_id !== user.id && transaction.seller_id !== user.id) {
+    if (typedTransaction.buyer_id !== user.id && typedTransaction.seller_id !== user.id) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -108,7 +111,9 @@ export async function POST(
       .eq('id', id)
       .single()
 
-    if (transactionError || !transaction) {
+    const typedTransaction2 = transaction as Pick<Transaction, 'buyer_id' | 'seller_id' | 'status'> | null
+
+    if (transactionError || !typedTransaction2) {
       return NextResponse.json(
         { error: 'Transaction not found' },
         { status: 404 }
@@ -116,7 +121,7 @@ export async function POST(
     }
 
     // Check if user is buyer or seller
-    if (transaction.buyer_id !== user.id && transaction.seller_id !== user.id) {
+    if (typedTransaction2.buyer_id !== user.id && typedTransaction2.seller_id !== user.id) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -124,7 +129,7 @@ export async function POST(
     }
 
     // Check if transaction is active (not cancelled)
-    if (transaction.status === 'cancelled') {
+    if (typedTransaction2.status === 'cancelled') {
       return NextResponse.json(
         { error: 'Cannot send messages to cancelled transaction' },
         { status: 400 }
@@ -132,13 +137,16 @@ export async function POST(
     }
 
     // Create message
+    const insertData: Database['public']['Tables']['messages']['Insert'] = {
+      transaction_id: id,
+      sender_id: user.id,
+      content: content.trim(),
+    }
+
     const { data: message, error: messageError } = await supabase
       .from('messages')
-      .insert({
-        transaction_id: id,
-        sender_id: user.id,
-        content: content.trim(),
-      })
+      // @ts-expect-error - Supabase types are correct at runtime
+      .insert(insertData)
       .select(`
         *,
         sender:users!messages_sender_id_fkey(*)

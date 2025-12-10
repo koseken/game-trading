@@ -69,7 +69,7 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Modal Content */}
       <div
         className={`
-          relative bg-white dark:bg-gray-800 rounded-lg shadow-xl
+          relative bg-white rounded-lg shadow-xl
           ${sizeStyles[size]}
           w-full max-h-[90vh] overflow-auto
           animate-slideUp
@@ -78,7 +78,7 @@ export const Modal: React.FC<ModalProps> = ({
         {showCloseButton && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
             aria-label="Close modal"
           >
             <svg
@@ -111,8 +111,8 @@ export interface ModalHeaderProps {
 
 export const ModalHeader: React.FC<ModalHeaderProps> = ({ children, className = '' }) => {
   return (
-    <div className={`px-6 py-4 border-b border-gray-200 dark:border-gray-700 ${className}`}>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{children}</h2>
+    <div className={`px-6 py-4 border-b border-gray-200 ${className}`}>
+      <h2 className="text-xl font-semibold text-gray-900">{children}</h2>
     </div>
   );
 };
@@ -124,7 +124,7 @@ export interface ModalBodyProps {
 
 export const ModalBody: React.FC<ModalBodyProps> = ({ children, className = '' }) => {
   return (
-    <div className={`px-6 py-4 text-gray-700 dark:text-gray-300 ${className}`}>
+    <div className={`px-6 py-4 text-gray-700 ${className}`}>
       {children}
     </div>
   );
@@ -137,7 +137,7 @@ export interface ModalFooterProps {
 
 export const ModalFooter: React.FC<ModalFooterProps> = ({ children, className = '' }) => {
   return (
-    <div className={`px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2 ${className}`}>
+    <div className={`px-6 py-4 border-t border-gray-200 flex justify-end gap-2 ${className}`}>
       {children}
     </div>
   );

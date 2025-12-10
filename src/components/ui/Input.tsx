@@ -17,7 +17,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            className="block text-sm font-medium text-gray-700 mb-1"
           >
             {label}
             {props.required && <span className="text-red-500 ml-1">*</span>}
@@ -40,10 +40,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               ${
                 error
                   ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
+                  : 'border-gray-300 text-gray-900 bg-white focus:border-blue-500 focus:ring-blue-500'
               }
               focus:outline-none focus:ring-2 focus:ring-offset-0
-              disabled:bg-gray-100 disabled:cursor-not-allowed dark:disabled:bg-gray-900
+              disabled:bg-gray-100 disabled:cursor-not-allowed
               ${className}
             `}
             aria-invalid={error ? 'true' : 'false'}
@@ -57,12 +57,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400" id={`${inputId}-error`}>
+          <p className="mt-1 text-sm text-red-600" id={`${inputId}-error`}>
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400" id={`${inputId}-helper`}>
+          <p className="mt-1 text-sm text-gray-500" id={`${inputId}-helper`}>
             {helperText}
           </p>
         )}

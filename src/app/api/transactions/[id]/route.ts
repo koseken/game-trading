@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Transaction, Listing, User } from '@/types/database'
 
 interface RouteContext {
   params: Promise<{
@@ -38,7 +39,9 @@ export async function GET(
       .eq('id', id)
       .single()
 
-    if (transactionError || !transaction) {
+    const typedTransaction = transaction as (Transaction & { listing: Listing; buyer: User; seller: User }) | null
+
+    if (transactionError || !typedTransaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
         { status: 404 }
@@ -46,14 +49,14 @@ export async function GET(
     }
 
     // Check if user is buyer or seller
-    if (transaction.buyer_id !== user.id && transaction.seller_id !== user.id) {
+    if (typedTransaction.buyer_id !== user.id && typedTransaction.seller_id !== user.id) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
       )
     }
 
-    return NextResponse.json({ transaction })
+    return NextResponse.json({ transaction: typedTransaction })
   } catch (error) {
     console.error('Error fetching transaction:', error)
     return NextResponse.json(

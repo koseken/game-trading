@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import DataTable, { Column } from '@/components/admin/DataTable'
 import Pagination from '@/components/admin/Pagination'
 
@@ -50,11 +50,7 @@ export default function AdminTransactionsPage() {
 
   const itemsPerPage = 20
 
-  useEffect(() => {
-    fetchTransactions()
-  }, [page, statusFilter])
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -75,7 +71,11 @@ export default function AdminTransactionsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, statusFilter])
+
+  useEffect(() => {
+    fetchTransactions()
+  }, [fetchTransactions])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ja-JP', {
@@ -209,7 +209,7 @@ export default function AdminTransactionsPage() {
               setStatusFilter(e.target.value)
               setPage(1)
             }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
           >
             <option value="">すべてのステータス</option>
             <option value="pending">保留中</option>

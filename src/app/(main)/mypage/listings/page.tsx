@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ListingCard } from './ListingCard'
+import { Listing, GameCategory } from '@/types/database'
 
 export default async function MyListingsPage() {
   const supabase = await createClient()
@@ -15,7 +16,7 @@ export default async function MyListingsPage() {
   }
 
   // Fetch all user's listings with categories
-  const { data: listings, error } = await supabase
+  const { data, error } = await supabase
     .from('listings')
     .select(`
       *,
@@ -23,6 +24,12 @@ export default async function MyListingsPage() {
     `)
     .eq('seller_id', user.id)
     .order('created_at', { ascending: false })
+
+  type ListingWithCategory = Listing & {
+    category: GameCategory | null
+  }
+
+  const listings = data as ListingWithCategory[] | null
 
   if (error) {
     console.error('Failed to fetch listings:', error)

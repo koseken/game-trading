@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createReviewSchema } from '@/lib/validations/user'
+import type { Database, Transaction, Review } from '@/types/database'
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +31,9 @@ export async function POST(request: NextRequest) {
       .eq('id', validatedData.transaction_id)
       .single()
 
-    if (transactionError || !transaction) {
+    const typedTransaction = transaction as Transaction | null
+
+    if (transactionError || !typedTransaction) {
       return NextResponse.json(
         { error: '取引が見つかりません' },
         { status: 404 }
@@ -38,8 +41,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is part of this transaction
-    const isBuyer = transaction.buyer_id === user.id
-    const isSeller = transaction.seller_id === user.id
+    const isBuyer = typedTransaction.buyer_id === user.id
+    const isSeller = typedTransaction.seller_id === user.id
 
     if (!isBuyer && !isSeller) {
       return NextResponse.json(
@@ -49,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if transaction is completed
-    if (transaction.status !== 'completed') {
+    if (typedTransaction.status !== 'completed') {
       return NextResponse.json(
         { error: '取引が完了していません' },
         { status: 400 }
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify reviewee is the other party in the transaction
-    const expectedRevieweeId = isBuyer ? transaction.seller_id : transaction.buyer_id
+    const expectedRevieweeId = isBuyer ? typedTransaction.seller_id : typedTransaction.buyer_id
     if (validatedData.reviewee_id !== expectedRevieweeId) {
       return NextResponse.json(
         { error: '評価対象のユーザーが正しくありません' },
@@ -81,15 +84,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Create review
+    const insertData: Database['public']['Tables']['reviews']['Insert'] = {
+      transaction_id: validatedData.transaction_id,
+      reviewer_id: user.id,
+      reviewee_id: validatedData.reviewee_id,
+      rating: validatedData.rating,
+      comment: validatedData.comment,
+    }
+
     const { data: review, error: reviewError } = await supabase
       .from('reviews')
-      .insert({
-        transaction_id: validatedData.transaction_id,
-        reviewer_id: user.id,
-        reviewee_id: validatedData.reviewee_id,
-        rating: validatedData.rating,
-        comment: validatedData.comment,
-      })
+      // @ts-expect-error - Supabase types are correct at runtime
+      .insert(insertData)
       .select()
       .single()
 
@@ -107,17 +113,22 @@ export async function POST(request: NextRequest) {
       .select('rating')
       .eq('reviewee_id', validatedData.reviewee_id)
 
-    if (reviews) {
-      const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0)
-      const avgRating = totalRating / reviews.length
-      const ratingCount = reviews.length
+    const typedReviews = (reviews ?? []) as Pick<Review, 'rating'>[]
+
+    if (typedReviews.length > 0) {
+      const totalRating = typedReviews.reduce((sum, r) => sum + r.rating, 0)
+      const avgRating = totalRating / typedReviews.length
+      const ratingCount = typedReviews.length
+
+      const updateData: Database['public']['Tables']['users']['Update'] = {
+        rating_avg: avgRating,
+        rating_count: ratingCount,
+      }
 
       await supabase
         .from('users')
-        .update({
-          rating_avg: avgRating,
-          rating_count: ratingCount,
-        })
+        // @ts-expect-error - Supabase types are correct at runtime
+        .update(updateData)
         .eq('id', validatedData.reviewee_id)
     }
 

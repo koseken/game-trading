@@ -104,7 +104,7 @@ export function ReviewForm({
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           maxLength={500}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white text-gray-900"
           placeholder="取引の感想や相手の良かった点などを入力してください"
         />
         <div className="mt-1 text-right text-xs text-gray-500">

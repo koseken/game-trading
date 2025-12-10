@@ -76,7 +76,7 @@ export default function DataTable<T>({
                   <td key={column.key} className="px-6 py-4 whitespace-nowrap">
                     {column.render
                       ? column.render(item)
-                      : String((item as any)[column.key] || '-')}
+                      : String((item as Record<string, unknown>)[column.key] || '-')}
                   </td>
                 ))}
               </tr>

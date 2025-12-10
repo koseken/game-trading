@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { ListingWithSeller } from '@/types/database'
 
 interface ListingCardProps {
@@ -14,13 +13,11 @@ export function ListingCard({ listing }: ListingCardProps) {
     <Link href={`/listings/${listing.id}`} className="group block">
       <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200">
         {/* Image */}
-        <div className="relative aspect-square bg-gray-100">
-          <Image
+        <div className="relative aspect-square bg-gray-100 overflow-hidden">
+          <img
             src={imageUrl}
             alt={listing.title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-200"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
           />
           {listing.status === 'sold' && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">

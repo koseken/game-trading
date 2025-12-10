@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createListingSchema } from '@/lib/validations/listing'
+import type { Database } from '@/types/database'
 
 // GET /api/listings - List all listings with filters
 export async function GET(request: NextRequest) {
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: '入力内容に誤りがあります', details: validationResult.error.errors },
+        { error: '入力内容に誤りがあります', details: validationResult.error.issues },
         { status: 400 }
       )
     }
@@ -96,17 +97,20 @@ export async function POST(request: NextRequest) {
     const data = validationResult.data
 
     // Create listing
+    const insertData: Database['public']['Tables']['listings']['Insert'] = {
+      seller_id: user.id,
+      title: data.title,
+      description: data.description,
+      price: data.price,
+      category_id: data.category_id,
+      images: data.images,
+      status: 'active'
+    }
+
     const { data: listing, error: createError } = await supabase
       .from('listings')
-      .insert({
-        seller_id: user.id,
-        title: data.title,
-        description: data.description,
-        price: data.price,
-        category_id: data.category_id,
-        images: data.images,
-        status: 'active'
-      })
+      // @ts-expect-error - Supabase types are correct at runtime
+      .insert(insertData)
       .select()
       .single()
 

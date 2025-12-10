@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { MessageCard } from './MessageCard'
+import { Transaction, Listing, User, Message } from '@/types/database'
 
 export default async function MessagesPage() {
   const supabase = await createClient()
@@ -15,7 +16,7 @@ export default async function MessagesPage() {
   }
 
   // Fetch all transactions where user is buyer or seller
-  const { data: transactions, error } = await supabase
+  const { data, error } = await supabase
     .from('transactions')
     .select(`
       *,
@@ -35,13 +36,21 @@ export default async function MessagesPage() {
     .neq('status', 'cancelled')
     .order('created_at', { ascending: false })
 
+  type TransactionWithDetails = Transaction & {
+    listing: Listing
+    buyer: User
+    seller: User
+  }
+
+  const transactions = data as TransactionWithDetails[] | null
+
   if (error) {
     console.error('Failed to fetch transactions:', error)
   }
 
   // Fetch last message for each transaction
   const transactionIds = transactions?.map((t) => t.id) || []
-  const { data: messages } = await supabase
+  const { data: messagesData } = await supabase
     .from('messages')
     .select(`
       *,
@@ -52,6 +61,12 @@ export default async function MessagesPage() {
     `)
     .in('transaction_id', transactionIds)
     .order('created_at', { ascending: false })
+
+  type MessageWithSender = Message & {
+    sender: User
+  }
+
+  const messages = messagesData as MessageWithSender[] | null
 
   // Group messages by transaction and get the latest one
   const lastMessagesByTransaction = new Map()

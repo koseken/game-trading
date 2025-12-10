@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ListingForm } from '@/components/features/listings/ListingForm'
+import type { Listing } from '@/types/database'
 
 interface EditListingPageProps {
   params: Promise<{ id: string }>
@@ -28,13 +29,15 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
     notFound()
   }
 
+  const typedListing = listing as unknown as Listing
+
   // Check if user is the owner
-  if (listing.seller_id !== user.id) {
+  if (typedListing.seller_id !== user.id) {
     redirect('/listings/' + id)
   }
 
   // Can only edit active listings
-  if (listing.status !== 'active') {
+  if (typedListing.status !== 'active') {
     redirect('/listings/' + id)
   }
 
@@ -49,7 +52,7 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
-          <ListingForm mode="edit" initialData={listing} />
+          <ListingForm mode="edit" initialData={typedListing} />
         </div>
       </div>
     </div>

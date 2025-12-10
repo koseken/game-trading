@@ -40,8 +40,8 @@ export function LoginForm() {
       const redirect = searchParams.get('redirect') || '/'
       router.push(redirect)
       router.refresh()
-    } catch (err: any) {
-      setError(err.message || 'ログインに失敗しました')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'ログインに失敗しました')
     } finally {
       setIsLoading(false)
     }
@@ -85,7 +85,7 @@ export function LoginForm() {
               id="email"
               type="email"
               autoComplete="email"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
               placeholder="example@email.com"
               disabled={isLoading}
             />
@@ -111,7 +111,7 @@ export function LoginForm() {
               id="password"
               type="password"
               autoComplete="current-password"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
               placeholder="6文字以上"
               disabled={isLoading}
             />

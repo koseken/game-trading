@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/components/admin/DataTable'
 import Pagination from '@/components/admin/Pagination'
@@ -29,11 +29,7 @@ export default function AdminUsersPage() {
 
   const itemsPerPage = 20
 
-  useEffect(() => {
-    fetchUsers()
-  }, [page, search])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -54,7 +50,11 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, search])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -196,7 +196,7 @@ export default function AdminUsersPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="ユーザー名またはメールアドレスで検索"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
           />
           <button
             type="submit"

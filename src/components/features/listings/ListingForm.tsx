@@ -173,7 +173,7 @@ export function ListingForm({ mode, initialData }: ListingFormProps) {
               type="text"
               {...register('title')}
               placeholder="例：ポケモン カードゲーム 未開封パック"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 ${
                 errors.title ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -202,7 +202,7 @@ export function ListingForm({ mode, initialData }: ListingFormProps) {
               {...register('description')}
               rows={8}
               placeholder="商品の状態、付属品、発送方法などを詳しく記載してください"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white text-gray-900 ${
                 errors.description ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -224,9 +224,9 @@ export function ListingForm({ mode, initialData }: ListingFormProps) {
               <input
                 id="price"
                 type="number"
-                {...register('price')}
+                {...register('price', { valueAsNumber: true })}
                 placeholder="1000"
-                className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 ${
                   errors.price ? 'border-red-500' : 'border-gray-300'
                 }`}
               />

@@ -119,7 +119,7 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
       {displayChildren.map((child, index) => (
         <div
           key={index}
-          className={`${index > 0 ? overlapStyles[size] : ''} border-2 border-white dark:border-gray-800 rounded-full`}
+          className={`${index > 0 ? overlapStyles[size] : ''} border-2 border-white rounded-full`}
           style={{ zIndex: displayChildren.length - index }}
         >
           {child}

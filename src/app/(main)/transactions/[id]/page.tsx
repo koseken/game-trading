@@ -9,6 +9,7 @@ import { ChatRoom } from '@/components/features/chat/ChatRoom'
 import { MessageInput } from '@/components/features/chat/MessageInput'
 import { TransactionHeader } from '@/components/features/chat/TransactionHeader'
 import { Loader2, Star } from 'lucide-react'
+import type { Database } from '@/types/database'
 
 export default function TransactionPage() {
   const params = useParams()
@@ -49,7 +50,6 @@ export default function TransactionPage() {
   const {
     messages,
     loading: messagesLoading,
-    error: messagesError,
     sendMessage,
     sending,
   } = useChat({
@@ -65,7 +65,7 @@ export default function TransactionPage() {
     try {
       await completeTransaction()
       setShowReviewForm(true)
-    } catch (error) {
+    } catch {
       alert('取引の完了に失敗しました')
     }
   }
@@ -80,23 +80,25 @@ export default function TransactionPage() {
         ? transaction.buyer_id
         : transaction.seller_id
 
+      const reviewData: Database['public']['Tables']['reviews']['Insert'] = {
+        transaction_id: transactionId,
+        reviewer_id: currentUserId,
+        reviewee_id: revieweeId,
+        rating,
+        comment: comment.trim() || null,
+      }
+
       const { error } = await supabase
         .from('reviews')
-        .insert({
-          transaction_id: transactionId,
-          reviewer_id: currentUserId,
-          reviewee_id: revieweeId,
-          rating,
-          comment: comment.trim() || null,
-        })
+        .insert(reviewData as never)
 
       if (error) throw error
 
       alert('レビューを投稿しました')
       setShowReviewForm(false)
       router.push('/transactions')
-    } catch (error) {
-      console.error('Error submitting review:', error)
+    } catch (err) {
+      console.error('Error submitting review:', err)
       alert('レビューの投稿に失敗しました')
     } finally {
       setSubmittingReview(false)
@@ -140,7 +142,7 @@ export default function TransactionPage() {
   const isCompleted = transaction.status === 'completed'
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col max-w-4xl mx-auto">
+    <div className="h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] bg-gray-50 flex flex-col max-w-4xl mx-auto">
       {/* Header */}
       <TransactionHeader transaction={transaction} />
 
@@ -211,7 +213,7 @@ export default function TransactionPage() {
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="取引の感想を入力してください"
                 rows={4}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-900"
               />
             </div>
 

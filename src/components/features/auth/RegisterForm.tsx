@@ -38,8 +38,8 @@ export function RegisterForm() {
       // Redirect to home page after successful registration
       router.push('/')
       router.refresh()
-    } catch (err: any) {
-      setError(err.message || 'アカウント作成に失敗しました')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'アカウント作成に失敗しました')
     } finally {
       setIsLoading(false)
     }
@@ -85,7 +85,7 @@ export function RegisterForm() {
               id="email"
               type="email"
               autoComplete="email"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
               placeholder="example@email.com"
               disabled={isLoading}
             />
@@ -111,7 +111,7 @@ export function RegisterForm() {
               id="username"
               type="text"
               autoComplete="username"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
               placeholder="3文字以上、英数字とアンダースコアのみ"
               disabled={isLoading}
             />
@@ -139,7 +139,7 @@ export function RegisterForm() {
               id="password"
               type="password"
               autoComplete="new-password"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
               placeholder="6文字以上"
               disabled={isLoading}
             />
@@ -167,7 +167,7 @@ export function RegisterForm() {
               id="confirmPassword"
               type="password"
               autoComplete="new-password"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
               placeholder="もう一度入力してください"
               disabled={isLoading}
             />

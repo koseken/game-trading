@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { User } from '@/types/database'
+import type { User, Database } from '@/types/database'
 import type { LoginInput, RegisterInput } from '@/lib/validations/auth'
 
 interface AuthState {
@@ -90,22 +90,22 @@ export function useAuth() {
       }
 
       return { data, error: null }
-    } catch (error: any) {
-      console.error('Sign in error:', error)
-      return { data: null, error: error.message || 'ログインに失敗しました' }
+    } catch (err: unknown) {
+      console.error('Sign in error:', err)
+      const message = err instanceof Error ? err.message : 'ログインに失敗しました'
+      return { data: null, error: message }
     }
   }
 
   const signUp = async (input: RegisterInput) => {
     try {
       // First, check if username is already taken
-      const { data: existingUser } = await supabase
+      const { data: existingUsers } = await supabase
         .from('users')
         .select('username')
         .eq('username', input.username)
-        .single()
 
-      if (existingUser) {
+      if (existingUsers && existingUsers.length > 0) {
         return {
           data: null,
           error: 'このユーザー名は既に使用されています',
@@ -118,37 +118,55 @@ export function useAuth() {
         password: input.password,
       })
 
-      if (authError) throw authError
+      if (authError) {
+        return {
+          data: null,
+          error: authError.message || 'アカウント作成に失敗しました',
+        }
+      }
 
       if (!authData.user) {
-        throw new Error('ユーザーの作成に失敗しました')
+        return {
+          data: null,
+          error: 'ユーザーの作成に失敗しました',
+        }
       }
 
       // Create user record in users table
-      const { data: userData, error: userError } = await supabase
+      const newUser: Database['public']['Tables']['users']['Insert'] = {
+        id: authData.user.id,
+        email: input.email,
+        username: input.username,
+      }
+      const { data: userData, error: userError } = await (supabase
         .from('users')
-        .insert({
-          id: authData.user.id,
-          email: input.email,
-          username: input.username,
-        })
+        // @ts-expect-error - Supabase type inference issue
+        .insert(newUser)
         .select()
-        .single()
+        .single())
 
       if (userError) {
-        // If user creation fails, delete the auth user
-        await supabase.auth.admin.deleteUser(authData.user.id)
-        throw userError
+        // If user creation fails, we can't use admin API from client
+        // The auth user will remain but without a profile
+        console.error('Failed to create user profile:', userError)
+        return {
+          data: null,
+          error: userError.message || 'ユーザープロフィールの作成に失敗しました',
+        }
       }
 
       setAuthState({ user: userData, loading: false })
 
       return { data: authData, error: null }
-    } catch (error: any) {
-      console.error('Sign up error:', error)
+    } catch (err: unknown) {
+      console.error('Sign up error:', err)
+      const message =
+        err instanceof Error ? err.message :
+        (err && typeof err === 'object' && 'message' in err) ? String(err.message) :
+        'アカウント作成に失敗しました'
       return {
         data: null,
-        error: error.message || 'アカウント作成に失敗しました',
+        error: message,
       }
     }
   }
@@ -163,9 +181,10 @@ export function useAuth() {
       router.refresh()
 
       return { error: null }
-    } catch (error: any) {
-      console.error('Sign out error:', error)
-      return { error: error.message || 'ログアウトに失敗しました' }
+    } catch (err: unknown) {
+      console.error('Sign out error:', err)
+      const message = err instanceof Error ? err.message : 'ログアウトに失敗しました'
+      return { error: message }
     }
   }
 

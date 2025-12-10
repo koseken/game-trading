@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/components/admin/DataTable'
 import Pagination from '@/components/admin/Pagination'
@@ -50,11 +50,7 @@ export default function AdminListingsPage() {
 
   const itemsPerPage = 20
 
-  useEffect(() => {
-    fetchListings()
-  }, [page, search, statusFilter])
-
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -78,7 +74,11 @@ export default function AdminListingsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, search, statusFilter])
+
+  useEffect(() => {
+    fetchListings()
+  }, [fetchListings])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -235,7 +235,7 @@ export default function AdminListingsPage() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="タイトルで検索"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             />
             <select
               value={statusFilter}
@@ -243,7 +243,7 @@ export default function AdminListingsPage() {
                 setStatusFilter(e.target.value)
                 setPage(1)
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             >
               <option value="">すべてのステータス</option>
               <option value="active">出品中</option>

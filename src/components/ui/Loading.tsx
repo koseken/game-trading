@@ -108,7 +108,7 @@ export const Loading: React.FC<LoadingProps> = ({
   if (fullScreen) {
     return (
       <div
-        className="fixed inset-0 bg-white dark:bg-gray-900 bg-opacity-80 dark:bg-opacity-80 flex items-center justify-center z-50"
+        className="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50"
         role="status"
         aria-live="polite"
         aria-label={text || 'Loading'}

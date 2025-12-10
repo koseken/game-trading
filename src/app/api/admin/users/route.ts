@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import type { Database, User } from '@/types/database'
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +21,9 @@ export async function GET(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (!userData?.is_admin) {
+    const typedUserData = userData as Pick<User, 'is_admin'> | null
+
+    if (!typedUserData?.is_admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -50,9 +53,11 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
+    const typedUsers = (users ?? []) as User[]
+
     // Get listing counts for each user
     const usersWithCounts = await Promise.all(
-      (users || []).map(async (u) => {
+      typedUsers.map(async (u) => {
         const { count: listingCount } = await supabase
           .from('listings')
           .select('*', { count: 'exact', head: true })
@@ -102,7 +107,9 @@ export async function PATCH(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (!userData?.is_admin) {
+    const typedUserData2 = userData as Pick<User, 'is_admin'> | null
+
+    if (!typedUserData2?.is_admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -114,9 +121,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update user admin status
+    const updateData: Database['public']['Tables']['users']['Update'] = {
+      is_admin
+    }
+
     const { error } = await supabase
       .from('users')
-      .update({ is_admin })
+      // @ts-expect-error - Supabase types are correct at runtime
+      .update(updateData)
       .eq('id', userId)
 
     if (error) {

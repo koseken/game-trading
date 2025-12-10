@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ProfileSettingsForm } from './ProfileSettingsForm'
 import { PasswordChangeForm } from './PasswordChangeForm'
+import { User } from '@/types/database'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -14,11 +15,13 @@ export default async function SettingsPage() {
     redirect('/login')
   }
 
-  const { data: user } = await supabase
+  const { data } = await supabase
     .from('users')
     .select('*')
     .eq('id', authUser.id)
     .single()
+
+  const user = data as User | null
 
   if (!user) {
     redirect('/login')

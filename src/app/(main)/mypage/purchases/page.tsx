@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { PurchaseCard } from './PurchaseCard'
+import { Transaction, Listing, User } from '@/types/database'
 
 export default async function PurchasesPage() {
   const supabase = await createClient()
@@ -15,7 +16,7 @@ export default async function PurchasesPage() {
   }
 
   // Fetch all purchases (transactions where user is buyer)
-  const { data: transactions, error } = await supabase
+  const { data, error } = await supabase
     .from('transactions')
     .select(`
       *,
@@ -29,18 +30,26 @@ export default async function PurchasesPage() {
     .eq('buyer_id', user.id)
     .order('created_at', { ascending: false })
 
+  type TransactionWithDetails = Transaction & {
+    listing: Listing
+    seller: User
+  }
+
+  const transactions = data as TransactionWithDetails[] | null
+
   if (error) {
     console.error('Failed to fetch purchases:', error)
   }
 
   // Check if user has already reviewed each transaction
   const transactionIds = transactions?.map((t) => t.id) || []
-  const { data: reviews } = await supabase
+  const { data: reviewsData } = await supabase
     .from('reviews')
     .select('transaction_id')
     .eq('reviewer_id', user.id)
     .in('transaction_id', transactionIds)
 
+  const reviews = reviewsData as { transaction_id: string }[] | null
   const reviewedTransactionIds = new Set(reviews?.map((r) => r.transaction_id) || [])
 
   // Group transactions by status
